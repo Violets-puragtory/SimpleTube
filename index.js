@@ -172,7 +172,7 @@ app.get("/watch", async (req, res) => {
             html = html.replace("{DOWNLOAD_PERCENT}", "0")
         }
     } else {
-        html = html.replace("{CACHE_WARNING}", "")
+        html = html.replace("{CACHE_WARNING}", "This video is fully cached!")
     }
 
     var finalThumb = vidInfo.thumbnails[vidInfo.thumbnails.length - 1].url
