@@ -164,7 +164,7 @@ app.get("/watch", async (req, res) => {
     if (!(id in videoCache && videoCache[id]["downloaded"] == true)) {
         html = html.replace("{CACHE_WARNING}", `
         <p style="color: lightgray">Please note that this video has not been fully cached, and may have trouble loading!
-        <br>{DOWNLOAD_PERCENT}% cached.</p>
+        <br>{DOWNLOAD_PERCENT}% cached (as of page load).</p>
         `)
         if (id in videoCache && "download%" in videoCache[id]) {
             html = html.replace("{DOWNLOAD_PERCENT}", videoCache[id]["download%"])
