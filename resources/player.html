@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +9,25 @@
 
     <title>Document</title>
 </head>
+
 <body>
+    <div id="titleBar">
+        <h1><a href="/">Simpletube</a></h1>
+    </div>
     <div id="videoContainer">
-        <video id="videoPlayer" controls muted="muted" autoplay poster="{VIDEO_THUMBNAIL}">
+        <video id="videoPlayer" controls autoplay poster="{VIDEO_THUMBNAIL}">
             <source src="/video?q={VIDEOID}" type="video/mp4">
         </video>
     </div>
     <hr>
-    <h2 id="title">{VIDEO_TITLE}</h2>
-    <p id="description">{VIDEO_DESCRIPTION}</p>
+    <main>
+        <h2 id="title">{VIDEO_TITLE}</h2>
+        {CACHE_WARNING}
+        <div id="description">
+            <h2>Description: <br></h2>
+            <p id="description">{VIDEO_DESCRIPTION}</p>
+        </div>
+    </main>
 </body>
+
 </html>
