@@ -16,6 +16,7 @@ const resources = path.join(__dirname, 'resources')
 const cachePath = path.join(__dirname, 'cache')
 
 const playerPath = path.join(resources, 'player.html')
+const searchPath = path.join(resources, 'searchPage.html')
 
 const cssHeader = `<style> ${fs.readFileSync(cssPath)} </style>`
 
@@ -37,6 +38,44 @@ app.use(express.static(staticPath))
 
 app.listen(PORT, () => {
     console.log("Simpletube is now listening on port: " + PORT)
+})
+
+app.get("/search", async (req, res) => {
+    var search = req.query.q || "How to search on SimpleTube"
+    res.setHeader("Content-Type", "text/html")
+    youtube.search(search).then((results) => {
+        var videos = results.videos
+        var html = fs.readFileSync(searchPath).toString()
+        
+        html = html.replace("{SEARCH}", search)
+
+        var addedHTML = ""
+
+        for (let index = 0; index < videos.length; index++) {
+            const result = videos[index];
+            addedHTML += `
+            <div class="videoResult container row">
+                 <div class="col-md-4 col-sm-6">
+                    <a class="videoLink" href="/watch?q=${result.id}">
+                        <img src="${result.thumbnail}">
+                    </a>
+                </div>
+                <div class="col-md-8 col-sm-6">
+                    <a class="videoLink" href="/watch?q=${result.id}">
+                        <h3>${result.title}</h3>
+                        <p>${result.description}</p><br>
+                        <img src="${result.channel.thumbnail}" class="minipfp">
+                        <a style="color: white; class="videoLink" href="${result.channel.link}">${result.channel.name}</a>
+                    </a>
+                </div>
+            </div>
+            
+            `
+            console.log(result)
+        }
+        
+        res.send(html.replace("{RESULTS}", addedHTML))
+    })
 })
 
 app.get("/video", async (req, res) => {
@@ -134,7 +173,7 @@ app.get("/video", async (req, res) => {
 })
 
 app.get("/watch", async (req, res) => {
-    var id = req.query.q || req.query.v
+    var id = req.query.q || req.query.v || "ubFq-wV3Eic"
 
     res.setHeader("Content-Type", "text/html")
 
@@ -157,7 +196,10 @@ app.get("/watch", async (req, res) => {
 
     html = html.replace("{CSS_HEADER}", cssHeader)
 
-    html = html.replace("{VIDEO_TITLE}", vidInfo.title)
+    for (let index = 0; index < 2; index++) {
+        html = html.replace("{VIDEO_TITLE}", vidInfo.title)
+        
+    }
 
     html = html.replace("{VIDEO_DESCRIPTION}", vidInfo.description || "No Description.")
 

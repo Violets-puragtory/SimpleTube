@@ -7,10 +7,9 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
         integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="/mainStyle.css">
+    <link rel="stylesheet" href="./mainStyle.css">
 
-
-    <title>{VIDEO_TITLE}</title>
+    <title>SimpleTube</title>
 </head>
 
 <body>
@@ -20,22 +19,13 @@
         </div>
         <div class="col-sm-7">
             <form action="/search">
-                <input type="text" placeholder="Search" name="q">
+                <input type="text" placeholder="Search" name="q" value="{SEARCH}">
             </form>
         </div>
     </div>
-    <div id="videoContainer">
-        <video id="videoPlayer" controls autoplay poster="{VIDEO_THUMBNAIL}">
-            <source src="/video?q={VIDEOID}" type="video/mp4">
-        </video>
-    </div>
-    <hr>
     <main>
-        <h2 id="title">{VIDEO_TITLE}</h2>
-        {CACHE_WARNING}
-        <div id="description">
-            <h2>Description: <br></h2>
-            <p id="description">{VIDEO_DESCRIPTION}</p>
+        <div class="container-fluid row" style="margin: 0; padding: 0;">
+            {RESULTS}
         </div>
     </main>
 </body>

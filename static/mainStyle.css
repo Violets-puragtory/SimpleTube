@@ -1,5 +1,5 @@
-body {
-    height: 100vh;
+body, html {
+    min-height: 100vh;
     padding: 0;
     margin: 0;
     background-color: rgb(40, 30, 50);
@@ -8,10 +8,15 @@ body {
 * {
     color: white;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
-    line-height: 2.5rem;
+    line-height: 1.5rem;
 }
 
-a:not(h1 > a) {
+/* div {
+    padding: 0 !important;
+    margin: 0 !important;
+} */
+
+a:not(h1 > a):not(.videoLink) {
     font-size: 1.5rem;
     background-color: black;
     padding: 8px;
@@ -22,7 +27,13 @@ a:not(h1 > a) {
     text-decoration: none;
 }
 
-h1:not(#titleBar > h1), h2, p, a {
+.videoLink {
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+}
+
+*:not(input) {
     text-align: center;
 }
 
@@ -31,20 +42,45 @@ h1:not(#titleBar > h1), h2, p, a {
 }
 
 #titleBar {
+    width: 100vw;
     background-color: rgb(5, 0, 10);
     /* border: 0px; */
     border: 2px transparent solid;
     border-bottom-color: white;
     position: sticky;
     top: 0px;
+    margin: 0;
+    padding: 0;
 }
 
-#titleBar > h1 {
-    margin: 10px;
+#titleBar > div > * {
+    display: inline-block;
+    padding: 0;
+    margin: 0;
 }
 
-#titleBar > h1 > a {
+#titleBar > div > form > input {
+    /* text-align: right; */
+    margin: auto;
+    padding: 5px;
+    width: 100%;
+    background-color: rgb(10, 5, 15);
+    border: 2px gray solid;
+}
+
+#titleBar > div {
+    padding: 0;
+    margin: 0;
+}
+
+#titleBar > div > form {
+    display: inline-block;
+    width: 100%;
+}
+
+#titleBar > div > h1 > a {
     text-decoration: none;
+    color: white;
 }
 
 #description {
@@ -68,12 +104,32 @@ h1:not(#titleBar > h1), h2, p, a {
 
 #videoContainer {
     max-width: 100vw;
-    padding: 0;
-    margin: 0;
     display: flex;
     background-color: black;
 }
 
 p {
     padding: 5px;
+}
+
+.videoResult {
+    background-color: black;
+    border: 2px gray solid;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    text-align: left;
+}
+
+img {
+    width: 70%;
+}
+
+.minipfp {
+    width: 60px;
+    height: 60px;
+    border: 2px white solid;
+    border-radius: 50%;
+    padding: 0;
+    margin: 0;
 }
