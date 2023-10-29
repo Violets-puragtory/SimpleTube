@@ -17,7 +17,7 @@ body, html {
 } */
 
 a:not(h1 > a):not(.videoLink) {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     background-color: black;
     padding: 8px;
     margin: 5px;
@@ -25,6 +25,7 @@ a:not(h1 > a):not(.videoLink) {
     border-radius: 15px;
     color: rgb(240, 220, 255);
     text-decoration: none;
+    display: inline;
 }
 
 .videoLink {
@@ -42,7 +43,7 @@ a:not(h1 > a):not(.videoLink) {
 }
 
 #titleBar {
-    width: 100vw;
+    width: 100%;
     background-color: rgb(5, 0, 10);
     /* border: 0px; */
     border: 2px transparent solid;
@@ -50,7 +51,7 @@ a:not(h1 > a):not(.videoLink) {
     position: sticky;
     top: 0px;
     margin: 0;
-    padding: 0;
+    padding: 10px;
 }
 
 #titleBar > div > * {
@@ -109,21 +110,51 @@ a:not(h1 > a):not(.videoLink) {
 }
 
 p {
-    padding: 5px;
+    padding: 2px;
 }
 
 .videoResult {
     background-color: black;
     border: 2px gray solid;
     border-radius: 10px;
-    padding: 10px;
-    margin: 10px;
+    padding: 3px;
+    margin: auto;
     text-align: left;
+    height: 100%;
+    
 }
 
-img {
-    width: 70%;
+@media (max-width: 768px) {
+    .resultContainer {
+        max-width: 450px;
+    }
 }
+
+.resultContainer {
+    margin: 5px auto;
+}
+
+.thumbnail {
+    width: 100%;
+    margin: auto;
+    border-radius: 20px;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border: 2px white solid;
+    margin: 5px auto;
+}
+
+.thumbparent {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+/* @media (max-width: 1200px) and (min-width: 992px) {
+    .resultDescription {
+        display: none;
+    }
+} */
 
 .minipfp {
     width: 60px;
@@ -132,4 +163,5 @@ img {
     border-radius: 50%;
     padding: 0;
     margin: 0;
+    display: inline-block;
 }

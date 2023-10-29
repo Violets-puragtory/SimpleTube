@@ -54,24 +54,28 @@ app.get("/search", async (req, res) => {
         for (let index = 0; index < videos.length; index++) {
             const result = videos[index];
             addedHTML += `
-            <div class="videoResult container row">
-                 <div class="col-md-4 col-sm-6">
-                    <a class="videoLink" href="/watch?q=${result.id}">
-                        <img src="${result.thumbnail}">
-                    </a>
-                </div>
-                <div class="col-md-8 col-sm-6">
-                    <a class="videoLink" href="/watch?q=${result.id}">
-                        <h3>${result.title}</h3>
-                        <p>${result.description}</p><br>
-                        <img src="${result.channel.thumbnail}" class="minipfp">
-                        <a style="color: white; class="videoLink" href="${result.channel.link}">${result.channel.name}</a>
-                    </a>
+            <div class="col-xxl-4 col-lg-6 col-md-12 col-sm-6 resultContainer">
+                <div class="videoResult container-fluid row">
+                    <div class="col-md-4 col-lg-6 thumbparent">
+                        <a class="videoLink" href="/watch?q=${result.id}">
+                            <img class="thumbnail" src="${result.thumbnail}; /Images/UnknownVideo.jpg">
+                        </a>
+                    </div>
+                    <div class="col-md-8 col-lg-6">
+                        <a class="videoLink" href="/watch?q=${result.id}">
+                            <p style="font-size: 1.25rem;">${result.title || "No Title Found"}</p>
+                            <p class="resultDescription">${result.description.substring(0, 75) + "..." || "No Description"}</p>
+                        </a>
+                    </div>
+                    <div style="display: block; width: 100%; ">
+                        <a style="color: white; margin: 10px; display: inline-block;" href="${result.channel.link}">
+                        <img src="${result.channel.thumbnail}; /Images/UnknownPFP.jpg" class="minipfp">
+                        ${result.channel.name}
+                        </a>
+                    </div>
                 </div>
             </div>
-            
             `
-            console.log(result)
         }
         
         res.send(html.replace("{RESULTS}", addedHTML))
@@ -136,20 +140,20 @@ app.get("/video", async (req, res) => {
             var debounce = true
 
             var dp = 0
-            ytdl(id, { filter: "videoandaudio", quality: "highest", format: 'mp4' })
+            ytdl(id, { filter: 'videoandaudio', quality: "highest", format: 'mp4' })
                 .on("progress", (chunk, ct, et) => {
-                    if (debounce) {
+                    if (debounce && ct > Math.min(et, 5000000)) {
                         debounce = false
                         videoCache[id] = {
                             "path": vidpath,
                             "size": et,
                             "downloaded": false,
                             "download%": 0
-                        }
+                        } 
                         ready(vidpath, fs.readFileSync(vidpath))
                     }
                     var percent = Math.round(ct / et * 100)
-                    if (percent > dp) {
+                    if (!debounce && percent > dp) {
                         dp = percent
                         videoCache[id]["download%"] = dp
                     }
@@ -206,7 +210,7 @@ app.get("/watch", async (req, res) => {
     if (!(id in videoCache && videoCache[id]["downloaded"] == true)) {
         html = html.replace("{CACHE_WARNING}", `
         <p style="color: lightgray">Please note that this video has not been fully cached, and may have trouble loading!
-        <br>{DOWNLOAD_PERCENT}% cached (as of page load).</p>
+        <br>{DOWNLOAD_PERCENT}% cached as of page load. If content fails to load after a minute, reload the page!</p>
         `)
         if (id in videoCache && "download%" in videoCache[id]) {
             html = html.replace("{DOWNLOAD_PERCENT}", videoCache[id]["download%"])
