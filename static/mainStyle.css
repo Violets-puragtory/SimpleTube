@@ -121,7 +121,7 @@ p {
     margin: auto;
     text-align: left;
     height: 100%;
-    
+    overflow: hidden;
 }
 
 @media (max-width: 768px) {

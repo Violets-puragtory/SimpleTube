@@ -59,6 +59,7 @@ app.get("/search", async (req, res) => {
                     <div class="col-md-4 col-lg-6 thumbparent">
                         <a class="videoLink" href="/watch?q=${result.id}">
                             <img class="thumbnail" src="${result.thumbnail}; /Images/UnknownVideo.jpg">
+                            <p style="display: block; text-align: left;">${result.durationString}</p>
                         </a>
                     </div>
                     <div class="col-md-8 col-lg-6">
@@ -67,7 +68,8 @@ app.get("/search", async (req, res) => {
                             <p class="resultDescription">${result.description.substring(0, 75) + "..." || "No Description"}</p>
                         </a>
                     </div>
-                    <div style="display: block; width: 100%; ">
+                    
+                    <div style="display: inline-block; width: 100%; ">
                         <a style="color: white; margin: 10px; display: inline-block;" href="${result.channel.link}">
                         <img src="${result.channel.thumbnail}; /Images/UnknownPFP.jpg" class="minipfp">
                         ${result.channel.name}
@@ -142,7 +144,7 @@ app.get("/video", async (req, res) => {
             var dp = 0
             ytdl(id, { filter: 'videoandaudio', quality: "highest", format: 'mp4' })
                 .on("progress", (chunk, ct, et) => {
-                    if (debounce && ct > Math.min(et, 5000000)) {
+                    if (debounce && (ct / et) > 0.05) {
                         debounce = false
                         videoCache[id] = {
                             "path": vidpath,
