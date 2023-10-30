@@ -13,7 +13,7 @@ const cssPath = path.join(staticPath, 'mainStyle.css')
 
 const resources = path.join(__dirname, 'resources')
 
-const cachePath = path.join(__dirname, 'cache/videos')
+const cachePath = path.join(__dirname, 'cache')
 const searchCacheDur = (process.env.SEARCH_DUR || 24) * 3600000
 
 const playerPath = path.join(resources, 'player.html')
@@ -44,7 +44,7 @@ app.listen(PORT, () => {
 })
 
 async function cacher(id, ready) {
-    vidpath = path.join(__dirname, `cache/${id}.mp4`)
+    vidpath = path.join(cachePath, `${id}.mp4`)
 
     var debounce = true
 
