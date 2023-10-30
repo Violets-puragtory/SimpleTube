@@ -19,8 +19,7 @@ const searchCacheDur = (process.env.SEARCH_DUR || 24) * 3600000
 const playerPath = path.join(resources, 'player.html')
 const searchPath = path.join(resources, 'searchPage.html')
 
-const cssHeader = `<style> ${fs.readFileSync(cssPath)} </style>`
-
+const cssHeader = `<link rel="stylesheet" href="/mainStyle.css">`
 
 
 if (fs.existsSync(cachePath)) {
@@ -52,7 +51,7 @@ async function cacher(id, ready) {
     var vidInfo = await ytdl.getBasicInfo(id)
     var video = ytdl(id, { filter: 'videoandaudio', quality: "highest", format: 'mp4' })
         .on("progress", (chunk, ct, et) => {
-            
+
             if (debounce && (ct / et) > 0.015) {
                 debounce = false
                 videoCache[id] = {
@@ -60,7 +59,7 @@ async function cacher(id, ready) {
                     "size": et,
                     "downloaded": false,
                     "download%": 0,
-                    "lastUsed": new Date().getTime(),
+                    "lastUsed": Date.now(),
                     "duration": (vidInfo.videoDetails.lengthSeconds + 1) * 1000
                 }
 
@@ -163,7 +162,6 @@ app.get("/search", async (req, res) => {
         const item = searchCache[itemName];
 
         if (item[1] < Date.now()) {
-            console.log("Deleted!")
             delete searchCache[search]
         }
     }
@@ -173,10 +171,10 @@ app.get("/search", async (req, res) => {
         searchCache[search][1] = Date.now() + searchCacheDur
     } else {
         youtube.search(search, { type: "all" })
-        .then((result)=> {
-            searchReturn(result)
-            searchCache[search] = [result, Date.now() + searchCacheDur]
-        })
+            .then((result) => {
+                searchReturn(result)
+                searchCache[search] = [result, Date.now() + searchCacheDur]
+            })
     }
 })
 
@@ -208,34 +206,32 @@ app.get("/video", async (req, res) => {
                 const end = parts[1]
                     ? parseInt(parts[1], 10)
                     : fileSize - 1
-    
+
                 if (start >= fs.statSync(vidpath).size + 1) {
                     return
                 }
-    
+
                 const chunksize = (end - start) + 1
-    
+
                 const head = {
                     'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                     'Accept-Ranges': 'bytes',
                     'Content-Length': chunksize,
                     'Content-Type': 'video/mp4',
                 }
-    
+
                 res.writeHead(206, head)
-    
+
                 if (fs.existsSync(vidpath)) {
                     fs.createReadStream(vidpath, { start: start }).pipe(res)
                 }
             }
         }
 
-        console.log(videoCache)
-
         if (id in videoCache) {
             if ("path" in videoCache[id]) {
                 ready(videoCache[id].path)
-                videoCache[id].lastUsed = new Date().getTime()
+                videoCache[id].lastUsed = Date.now()
             }
         } else {
             videoCache[id] = []
@@ -252,6 +248,20 @@ app.get("/video", async (req, res) => {
         }
         res.writeHead(200, head)
         fs.createReadStream(path).pipe(res)
+    }
+
+    var tA = Object.keys(videoCache)
+    for (let index = 0; index < tA.length; index++) {
+        const itemName = tA[index];
+        const item = videoCache[itemName]
+        const itemPath = item.path
+
+        if ("lastUsed" in item && item.lastUsed + (item.duration * 2.5) < Date.now()) {
+            delete videoCache[itemName]
+            if (fs.existsSync(itemPath)) {
+                fs.unlinkSync(itemPath)
+            }
+        }
     }
 })
 
