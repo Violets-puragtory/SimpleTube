@@ -13,8 +13,8 @@ const cssPath = path.join(staticPath, 'mainStyle.css')
 
 const resources = path.join(__dirname, 'resources')
 
-const cachePath = path.join(__dirname, 'cache')
-// const cachePath = "/tmp/cache/SimpleTube"
+const cachePath = path.join(__dirname, 'cache/videos')
+const searchCacheDur = (process.env.SEARCH_DUR || 24) * 3600000
 
 const playerPath = path.join(resources, 'player.html')
 const searchPath = path.join(resources, 'searchPage.html')
@@ -31,6 +31,7 @@ fs.mkdirSync(cachePath)
 
 
 var videoCache = {}
+var searchCache = {}
 
 var app = express()
 
@@ -42,13 +43,13 @@ app.listen(PORT, () => {
     console.log("Simpletube is now listening on port: " + PORT)
 })
 
-function cacher(id, ready) {
-    console.log(id)
+async function cacher(id, ready) {
     vidpath = path.join(__dirname, `cache/${id}.mp4`)
 
     var debounce = true
 
     var dp = 0
+    var vidInfo = await ytdl.getBasicInfo(id)
     var video = ytdl(id, { filter: 'videoandaudio', quality: "highest", format: 'mp4' })
         .on("progress", (chunk, ct, et) => {
             
@@ -59,7 +60,8 @@ function cacher(id, ready) {
                     "size": et,
                     "downloaded": false,
                     "download%": 0,
-                    "lastUsed": new Date().getTime()
+                    "lastUsed": new Date().getTime(),
+                    "duration": (vidInfo.videoDetails.lengthSeconds + 1) * 1000
                 }
 
                 ready(vidpath, fs.readFileSync(vidpath))
@@ -81,7 +83,8 @@ function cacher(id, ready) {
 app.get("/search", async (req, res) => {
     var search = req.query.q || "How to search on SimpleTube"
     res.setHeader("Content-Type", "text/html")
-    youtube.search(search, { type: "all" }).then((results) => {
+
+    function searchReturn(results) {
         var videos = results.videos
 
         var html = fs.readFileSync(searchPath).toString()
@@ -125,20 +128,20 @@ app.get("/search", async (req, res) => {
             addedHTML += `
             <div class="col-xxl-4 col-sm-6 resultContainer">
                 <div class="videoResult container-fluid row">
-                    <div class=" col-lg-6 thumbparent">
+                    <div class="col-lg-6 thumbparent">
                         <a class="videoLink" href="/watch?v=${result.id}">
                             <img class="thumbnail" src="${result.thumbnail}">
                             <p style="display: block; text-align: left;">${result.durationString}</p>
                         </a>
                     </div>
-                    <div class=" col-lg-6">
+                    <div class="col-lg-6">
                         <a class="videoLink" href="/watch?v=${result.id}">
                             <p style="font-size: 1.25rem;">${result.title || "No Title Found"}</p>
                             <p class="resultDescription">${result.description.substring(0, 75) + "..." || "No Description"}</p>
                         </a>
                     </div>
                     
-                    <div style="display: inline-block; width: 100%; ">
+                    <div style="display: inline-block; width: 100%;">
                         <a style="color: white; margin: 10px; display: inline-block;" href="${result.channel.link}">
                         <img src="${result.channel.thumbnail}" class="minipfp">
                         ${result.channel.name}
@@ -150,7 +153,31 @@ app.get("/search", async (req, res) => {
         }
 
         res.send(html.replace("{RESULTS}", addedHTML))
-    })
+    }
+
+    var tA = Object.keys(searchCache)
+
+
+    for (let index = 0; index < tA.length; index++) {
+        itemName = tA[index]
+        const item = searchCache[itemName];
+
+        if (item[1] < Date.now()) {
+            console.log("Deleted!")
+            delete searchCache[search]
+        }
+    }
+
+    if (search in searchCache) {
+        searchReturn(searchCache[search][0])
+        searchCache[search][1] = Date.now() + searchCacheDur
+    } else {
+        youtube.search(search, { type: "all" })
+        .then((result)=> {
+            searchReturn(result)
+            searchCache[search] = [result, Date.now() + searchCacheDur]
+        })
+    }
 })
 
 app.get("/video", async (req, res) => {
@@ -212,7 +239,7 @@ app.get("/video", async (req, res) => {
             }
         } else {
             videoCache[id] = []
-            var video = cacher(id, ready)
+            var video = await cacher(id, ready)
             video.pipe(fs.createWriteStream(vidpath))
         }
 

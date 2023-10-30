@@ -117,25 +117,39 @@ p {
     background-color: black;
     border: 2px gray solid;
     border-radius: 10px;
-    padding: 3px;
+    padding: 2px;
     margin: auto;
     text-align: left;
     height: 100%;
     overflow: hidden;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 720px) {
     .resultContainer {
         max-width: 450px;
     }
 }
 
+@media (min-width: 720px) and (max-width: 992px) {
+    .resultContainer {
+        max-width: 450px;
+    }
+}
+
+@media (min-width: 992px) {
+    .resultContainer {
+        max-width: 550px;
+    }
+}
+
 .resultContainer {
-    margin: 5px auto;
+    margin: 0 auto;
+    padding: 5px;
 }
 
 .thumbnail {
     width: 100%;
+    max-width: 350px;
     margin: auto;
     border-radius: 20px;
     aspect-ratio: 16/9;
@@ -167,11 +181,12 @@ p {
 }
 
 main {
-    padding: 10px;
+    padding: 5px;
 }
 
 .pfp {
     width: 100%;
+    max-width: 150px;
     border-radius: 50%;
     border: white 2px solid;
     margin: 15px auto;
