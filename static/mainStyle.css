@@ -165,3 +165,18 @@ p {
     margin: 0;
     display: inline-block;
 }
+
+main {
+    padding: 10px;
+}
+
+.pfp {
+    width: 100%;
+    border-radius: 50%;
+    border: white 2px solid;
+    margin: 15px auto;
+}
+
+hr {
+    margin: 20px auto;
+}

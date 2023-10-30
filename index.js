@@ -14,6 +14,7 @@ const cssPath = path.join(staticPath, 'mainStyle.css')
 const resources = path.join(__dirname, 'resources')
 
 const cachePath = path.join(__dirname, 'cache')
+// const cachePath = "/tmp/cache/SimpleTube"
 
 const playerPath = path.join(resources, 'player.html')
 const searchPath = path.join(resources, 'searchPage.html')
@@ -28,6 +29,7 @@ if (fs.existsSync(cachePath)) {
 
 fs.mkdirSync(cachePath)
 
+
 var videoCache = {}
 
 var app = express()
@@ -40,30 +42,97 @@ app.listen(PORT, () => {
     console.log("Simpletube is now listening on port: " + PORT)
 })
 
+function cacher(id, ready) {
+    console.log(id)
+    vidpath = path.join(__dirname, `cache/${id}.mp4`)
+
+    var debounce = true
+
+    var dp = 0
+    var video = ytdl(id, { filter: 'videoandaudio', quality: "highest", format: 'mp4' })
+        .on("progress", (chunk, ct, et) => {
+            
+            if (debounce && (ct / et) > 0.015) {
+                debounce = false
+                videoCache[id] = {
+                    "path": vidpath,
+                    "size": et,
+                    "downloaded": false,
+                    "download%": 0,
+                    "lastUsed": new Date().getTime()
+                }
+
+                ready(vidpath, fs.readFileSync(vidpath))
+            }
+            var percent = Math.round(ct / et * 100)
+            if (!debounce && percent > dp && id in videoCache && "path" in videoCache[id]) {
+                dp = percent
+                videoCache[id]["download%"] = dp
+            }
+        })
+        .on("finish", () => {
+            if (id in videoCache) {
+                videoCache[id]["downloaded"] = true
+            }
+        })
+    return video
+}
+
 app.get("/search", async (req, res) => {
     var search = req.query.q || "How to search on SimpleTube"
     res.setHeader("Content-Type", "text/html")
-    youtube.search(search).then((results) => {
+    youtube.search(search, { type: "all" }).then((results) => {
         var videos = results.videos
+
         var html = fs.readFileSync(searchPath).toString()
-        
+
         html = html.replace("{SEARCH}", search)
 
         var addedHTML = ""
 
+        var channels = results.channels
+
+        if (channels.length > 0) {
+
+            addedHTML += "<h2><br>Channels:</h2>"
+
+            for (let index = 0; index < channels.length; index++) {
+                const channel = channels[index]
+                addedHTML += `
+                <div class="col-xxl-4 col-sm-6 resultContainer">
+                    <div class="videoResult container-fluid row">
+                        <div class="col-lg-5 col-md-6 thumbparent">
+                            <a class="videoLink" href="/channel?q=${channel.id}">
+                                <img class="pfp" src="${channel.thumbnail}">
+                            </a>
+                        </div>
+                        <div class="col-lg-7 col-md-6">
+                            <a class="videoLink" href="/channel?q=${channel.id}">
+                                <p style="font-size: 1.25rem;">${channel.name || "No Title Found"}</p>
+                                <p class="resultDescription">${channel.description || "No Description"}</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `
+            }
+        }
+
+        addedHTML += "<h2><br>Videos:</h2>"
+
         for (let index = 0; index < videos.length; index++) {
             const result = videos[index];
             addedHTML += `
-            <div class="col-xxl-4 col-lg-6 col-md-12 col-sm-6 resultContainer">
+            <div class="col-xxl-4 col-sm-6 resultContainer">
                 <div class="videoResult container-fluid row">
-                    <div class="col-md-4 col-lg-6 thumbparent">
-                        <a class="videoLink" href="/watch?q=${result.id}">
-                            <img class="thumbnail" src="${result.thumbnail}; /Images/UnknownVideo.jpg">
+                    <div class=" col-lg-6 thumbparent">
+                        <a class="videoLink" href="/watch?v=${result.id}">
+                            <img class="thumbnail" src="${result.thumbnail}">
                             <p style="display: block; text-align: left;">${result.durationString}</p>
                         </a>
                     </div>
-                    <div class="col-md-8 col-lg-6">
-                        <a class="videoLink" href="/watch?q=${result.id}">
+                    <div class=" col-lg-6">
+                        <a class="videoLink" href="/watch?v=${result.id}">
                             <p style="font-size: 1.25rem;">${result.title || "No Title Found"}</p>
                             <p class="resultDescription">${result.description.substring(0, 75) + "..." || "No Description"}</p>
                         </a>
@@ -71,7 +140,7 @@ app.get("/search", async (req, res) => {
                     
                     <div style="display: inline-block; width: 100%; ">
                         <a style="color: white; margin: 10px; display: inline-block;" href="${result.channel.link}">
-                        <img src="${result.channel.thumbnail}; /Images/UnknownPFP.jpg" class="minipfp">
+                        <img src="${result.channel.thumbnail}" class="minipfp">
                         ${result.channel.name}
                         </a>
                     </div>
@@ -79,13 +148,12 @@ app.get("/search", async (req, res) => {
             </div>
             `
         }
-        
+
         res.send(html.replace("{RESULTS}", addedHTML))
     })
 })
 
 app.get("/video", async (req, res) => {
-
     var id = req.query.q || req.query.v
     var range = req.headers.range
 
@@ -106,64 +174,46 @@ app.get("/video", async (req, res) => {
 
     if (range) {
         function ready(vidpath) {
-            const fileSize = videoCache[id].size
-            // const fileSize = fs.statSync(vidpath).size + 1
-            const parts = range.replace(/bytes=/, "").split("-")
-            const start = parseInt(parts[0], 10)
-            const end = parts[1]
-                ? parseInt(parts[1], 10)
-                : fileSize - 1
-
-            if (start >= fs.statSync(vidpath).size + 1) {
-                console.log("AAAAAAAAA")
-                res.status(416).send('Requested range not satisfiable\n' + start + ' >= ' + fileSize);
-                return
+            if (fs.existsSync(vidpath)) {
+                const fileSize = videoCache[id].size
+                const parts = range.replace(/bytes=/, "").split("-")
+                const start = parseInt(parts[0], 10)
+                const end = parts[1]
+                    ? parseInt(parts[1], 10)
+                    : fileSize - 1
+    
+                if (start >= fs.statSync(vidpath).size + 1) {
+                    return
+                }
+    
+                const chunksize = (end - start) + 1
+    
+                const head = {
+                    'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': chunksize,
+                    'Content-Type': 'video/mp4',
+                }
+    
+                res.writeHead(206, head)
+    
+                if (fs.existsSync(vidpath)) {
+                    fs.createReadStream(vidpath, { start: start }).pipe(res)
+                }
             }
-
-            const chunksize = (end - start) + 1
-
-            const head = {
-                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunksize,
-                'Content-Type': 'video/mp4',
-            }
-
-            res.writeHead(206, head)
-
-            fs.createReadStream(vidpath, { start: start }).pipe(res)
         }
 
+        console.log(videoCache)
+
         if (id in videoCache) {
-            ready(videoCache[id].path)
+            if ("path" in videoCache[id]) {
+                ready(videoCache[id].path)
+                videoCache[id].lastUsed = new Date().getTime()
+            }
         } else {
-            vidpath = path.join(__dirname, `cache/${id}.mp4`)
-
-            var debounce = true
-
-            var dp = 0
-            ytdl(id, { filter: 'videoandaudio', quality: "highest", format: 'mp4' })
-                .on("progress", (chunk, ct, et) => {
-                    if (debounce && (ct / et) > 0.05) {
-                        debounce = false
-                        videoCache[id] = {
-                            "path": vidpath,
-                            "size": et,
-                            "downloaded": false,
-                            "download%": 0
-                        } 
-                        ready(vidpath, fs.readFileSync(vidpath))
-                    }
-                    var percent = Math.round(ct / et * 100)
-                    if (!debounce && percent > dp) {
-                        dp = percent
-                        videoCache[id]["download%"] = dp
-                    }
-                })
-                .on("finish", () => {
-                    videoCache[id]["downloaded"] = true
-                })
-                .pipe(fs.createWriteStream(vidpath))
+            videoCache[id] = []
+            var video = cacher(id, ready)
+            video.pipe(fs.createWriteStream(vidpath))
         }
 
 
@@ -204,7 +254,7 @@ app.get("/watch", async (req, res) => {
 
     for (let index = 0; index < 2; index++) {
         html = html.replace("{VIDEO_TITLE}", vidInfo.title)
-        
+
     }
 
     html = html.replace("{VIDEO_DESCRIPTION}", vidInfo.description || "No Description.")
