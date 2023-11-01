@@ -143,7 +143,7 @@ app.get("/search", async (req, res) => {
                     </div>
                     
                     <div style="display: inline-block; width: 100%;">
-                        <a style="color: white; margin: 10px; display: inline-block;" href="${result.channel.link}">
+                        <a style="color: white; margin: 10px; display: inline-block;" href="/channel?q=${result.channel.id}">
                         <img src="${result.channel.thumbnail}" class="minipfp">
                         ${result.channel.name}
                         </a>
