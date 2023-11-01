@@ -253,6 +253,7 @@ app.get("/video", async (req, res) => {
     var range = req.headers.range
 
     res.setHeader("X-Accel-Buffering", "no")
+    res.setHeader("Content-Type", "video/mp4")
 
     if (ytdl.validateURL(id)) {
         id = ytdl.getVideoID(id)
@@ -264,8 +265,6 @@ app.get("/video", async (req, res) => {
         res.end()
         return
     }
-
-    res.setHeader("Content-Type", "video/mp4")
 
     if (range) {
         function ready(vidpath) {
