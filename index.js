@@ -3,7 +3,8 @@ const express = require("express"),
     fs = require("fs"),
     ytdl = require("ytdl-core"),
     bodyParser = require("body-parser"),
-    youtube = require("scrape-youtube")
+    youtube = require("scrape-youtube"),
+    ytExt = require("youtube-ext")
 
 const PORT = process.env.PORT || 8080
 
@@ -18,6 +19,7 @@ const searchCacheDur = (process.env.SEARCH_DUR || 24) * 3600000
 
 const playerPath = path.join(resources, 'player.html')
 const searchPath = path.join(resources, 'searchPage.html')
+const channelPath = path.join(resources, 'channelPage.html')
 
 const cssHeader = `<link rel="stylesheet" href="/mainStyle.css">`
 
@@ -93,7 +95,6 @@ app.get("/search", async (req, res) => {
         var addedHTML = ""
 
         var channels = results.channels
-
         if (channels.length > 0) {
 
             addedHTML += "<h2><br>Channels:</h2>"
@@ -120,11 +121,12 @@ app.get("/search", async (req, res) => {
             }
         }
 
-        addedHTML += "<h2><br>Videos:</h2>"
+        if (videos.length > 0) {
+            addedHTML += "<h2><br>Videos:</h2>"
 
-        for (let index = 0; index < videos.length; index++) {
-            const result = videos[index];
-            addedHTML += `
+            for (let index = 0; index < videos.length; index++) {
+                const result = videos[index];
+                addedHTML += `
             <div class="col-xxl-4 col-sm-6 resultContainer">
                 <div class="videoResult container-fluid row">
                     <div class="col-lg-6 thumbparent">
@@ -149,6 +151,7 @@ app.get("/search", async (req, res) => {
                 </div>
             </div>
             `
+            }
         }
 
         res.send(html.replace("{RESULTS}", addedHTML))
@@ -176,6 +179,73 @@ app.get("/search", async (req, res) => {
                 searchCache[search] = [result, Date.now() + searchCacheDur]
             })
     }
+})
+
+app.get("/channel", async (req, res) => {
+    var section = req.query.s || "videos"
+    var channel = req.query.q || "UChcrBJNJLZucy3TPyGyAY2g"
+
+    var html = fs.readFileSync(channelPath).toString()
+
+    var info = await ytExt.channelInfo(channel, { includeVideos: true })
+
+    var videos = info.videos
+    console.log(info)
+    var addedHTML = ""
+    if (section == "videos") {
+        for (let index = 0; index < videos.length; index++) {
+            const result = videos[index];
+            if (result.title != undefined) {
+                addedHTML += `
+                <div class="col-xxl-4 col-sm-6 resultContainer">
+                    <div class="videoResult container-fluid row">
+                        <div class="col-lg-6 thumbparent">
+                            <a class="videoLink" href="/watch?v=${result.id}">
+                                <img class="thumbnail" src="${result.thumbnails[0].url}">
+                                <p style="display: block; text-align: left;">${result.duration.pretty}</p>
+                            </a>
+                        </div>
+                        <div class="col-lg-6">
+                            <a class="videoLink" href="/watch?v=${result.id}">
+                                <p style="font-size: 1.25rem;">${result.title || "No Title Found"}</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `
+            } else {
+                addedHTML = ""
+            }
+            
+        }
+    } else if (section == "about") {
+        addedHTML += `
+        <div id="description">
+            <h2>Description: <br></h2>
+            <p>${info.description}</p>
+            <p>Subscribers: ${info.subscribers.pretty}
+        </div>
+    `
+    }
+
+    if (addedHTML == "") {
+        addedHTML = `<h2>Failed to load ${section}! Sorry... T^T<h2>`
+    }
+
+    html = html.replace("{RESULTS}", addedHTML)
+
+    html = html.replace("{CHANNEL_NAME}", info.name)
+    html = html.replace("{CHANNEL_DESC}", info.description)
+
+    for (let index = 0; index < 3; index++) {
+        html = html.replace("{CHANNEL_ID}", info.id)
+
+    }
+
+    html = html.replace("{CHANNEL_PFP}", info.thumbnails[0].url)
+    html = html.replace("{SUB_COUNT}", info.subscribers.pretty)
+
+    res.send(html)
 })
 
 app.get("/video", async (req, res) => {
