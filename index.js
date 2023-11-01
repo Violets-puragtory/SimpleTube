@@ -153,7 +153,9 @@ app.get("/search", async (req, res) => {
             `
             }
         }
-
+        if (addedHTML == "") {
+            addedHTML = "<h2>No results found!</h2>"
+        }
         res.send(html.replace("{RESULTS}", addedHTML))
     }
 

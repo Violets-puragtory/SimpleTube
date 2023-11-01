@@ -5,6 +5,7 @@ Simpletube is a NodeJS youtube client without ads or client-sided javascript.
 ## Player Goals
 - [x] Make a basic video player
 - [x] Make it *stylish*
+- [ ] Add channel info
 - [ ] Add captions
 - [ ] Show channel on watch page
 - [ ] Add live support
