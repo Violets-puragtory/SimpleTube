@@ -1,3 +1,6 @@
+# This repository has migrated to codeberg
+Due to recent distasteful changes within github, this repository will be moving to Codeberg. Apologies for any inconvinience. https://codeberg.org/Bingus_Violet/SimpleTube
+
 # SimpleTube
 Simpletube is a NodeJS youtube client without ads or client-sided javascript.
 
